@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kasse</title>
     <link rel="stylesheet" href="/checkout.css" />
+    <link rel="stylesheet" href="/checkout-paypal.css" />
 
-    <!-- Chargebee.js (required for Card Components + Payment Method Helpers) -->
+    <!-- Chargebee.js (required for the PayPal Payment Method Helper) -->
     <script src="https://js.chargebee.com/v2/chargebee.js"></script>
   </head>
   <body>
@@ -38,15 +39,14 @@
               <input type="email" id="email" name="email" autocomplete="email" />
             </div>
 
-            <div class="field-row">
-              <div class="field">
-                <label for="phone">Telefonnummer</label>
-                <input type="tel" id="phone" name="phone" autocomplete="tel" />
-              </div>
-              <div class="field">
-                <label for="company">Firmenname</label>
-                <input type="text" id="company" name="company" autocomplete="organization" />
-              </div>
+            <div class="field">
+              <label for="phone">Telefonnummer</label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel" />
+            </div>
+
+            <div class="field">
+              <label for="company">Firmenname</label>
+              <input type="text" id="company" name="company" autocomplete="organization" />
             </div>
           </section>
 
@@ -89,64 +89,24 @@
                   <option value="GB">Vereinigtes Königreich</option>
                 </select>
               </div>
+              <!-- Free-text Bundesland, as in the reference design -->
               <div class="field">
                 <label for="state">Bundesland<span class="req">*</span></label>
-                <select id="state" name="state">
-                  <option value="">Auswählen</option>
-                  <option value="BW">Baden-Württemberg</option>
-                  <option value="BY">Bayern</option>
-                  <option value="BE">Berlin</option>
-                  <option value="BB">Brandenburg</option>
-                  <option value="HB">Bremen</option>
-                  <option value="HH">Hamburg</option>
-                  <option value="HE">Hessen</option>
-                  <option value="MV">Mecklenburg-Vorpommern</option>
-                  <option value="NI">Niedersachsen</option>
-                  <option value="NW">Nordrhein-Westfalen</option>
-                  <option value="RP">Rheinland-Pfalz</option>
-                  <option value="SL">Saarland</option>
-                  <option value="SN">Sachsen</option>
-                  <option value="ST">Sachsen-Anhalt</option>
-                  <option value="SH">Schleswig-Holstein</option>
-                  <option value="TH">Thüringen</option>
-                </select>
+                <input type="text" id="state" name="state" autocomplete="address-level1" />
               </div>
             </div>
           </section>
 
-          <!-- Payment method -->
+          <!-- Payment method: PayPal only -->
           <section class="checkout-section">
             <h2 class="section-title">Zahlungsmethode</h2>
 
-            <!-- PayPal button — hidden until a PayPal gateway is linked in the
-                 Chargebee dashboard. Remove the "hidden" attribute to show it. -->
-            <button type="button" id="paypal-button" class="paypal-button" hidden>
+            <button type="button" id="paypal-button" class="paypal-button paypal-button--navy">
               <svg class="paypal-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="currentColor" d="M7.08 20.5c-.06.4-.3.5-.6.5h-2.2c-.4 0-.5-.2-.4-.6L6.6 5.2c.06-.4.3-.5.6-.5h4.4c2.5 0 4.2 1.2 4.2 3.4 0 2.6-2 4.2-4.6 4.2H8.6l-.7 4.4-.8 3.8zM12.4 3.7c.3-.2.6-.3 1-.3h3.6c2.6 0 4.4 1.1 4.4 3.5 0 2.9-2.3 4.7-5.3 4.7h-2.2l-.7 4.4-.8 3.8c-.06.4-.3.5-.6.5h-2.2c-.4 0-.5-.2-.4-.6l2.2-12.7c.06-.4.3-.5.6-.5h1.4l-1 2.6z"/>
               </svg>
               Mit PayPal bezahlen
             </button>
-
-            <div class="or-divider" hidden><span>oder mit Karte bezahlen</span></div>
-
-            <div class="card-fields">
-              <div class="field">
-                <label>Kartennummer</label>
-                <div id="card-number" class="card-input"></div>
-              </div>
-              <div class="field-row">
-                <div class="field">
-                  <label>Ablaufdatum</label>
-                  <div id="card-expiry" class="card-input"></div>
-                </div>
-                <div class="field">
-                  <label>CVV</label>
-                  <div id="card-cvv" class="card-input"></div>
-                </div>
-              </div>
-            </div>
-
-            <button type="button" id="pay-button" class="pay-button">Jetzt bezahlen</button>
           </section>
         </main>
 
@@ -155,15 +115,14 @@
           <h2 class="order-title">Bestellübersicht</h2>
 
           <div class="price-line">
-            <span id="price-line" class="price-amount">1,00 €</span>
+            <span id="price-line" class="price-amount">1,00 $</span>
           </div>
 
           <hr class="rule-1" />
-          <hr class="rule-2" />
 
           <div class="total-line">
             <span>Gesamtsumme</span>
-            <strong id="total-amount">1,00 €</strong>
+            <strong id="total-amount">1,00 $</strong>
           </div>
 
           <div class="secure-text">
@@ -176,6 +135,6 @@
 
     <div id="error-banner" class="error-banner" hidden></div>
 
-    <script src="/checkout.js"></script>
+    <script src="/checkout-paypal.js"></script>
   </body>
 </html>

@@ -1,0 +1,21 @@
+/* ---------------------------------------------------------------------------
+   PayPal-only checkout page — overrides loaded after checkout.css.
+   Only touches this page; the existing /checkout card page is unaffected.
+--------------------------------------------------------------------------- */
+
+/* Header underline, as in the reference design */
+.checkout-header {
+  border-bottom: 1px solid #e4e7eb;
+  padding-bottom: 16px;
+}
+
+/* Navy PayPal button (#14387F) as in the reference design.
+   The :hover rule must match .paypal-button:hover specificity and come later
+   in the cascade so the default PayPal blue never wins on hover. */
+.paypal-button--navy {
+  background: #14387f;
+}
+
+.paypal-button--navy:hover {
+  background: #0e2c63;
+}

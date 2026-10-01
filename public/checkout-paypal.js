@@ -1,15 +1,12 @@
 /* ---------------------------------------------------------------------------
-   Custom checkout logic
-   - Card payments: Chargebee.js Card Components (tokenize + authorizeWith3ds)
-   - PayPal: Chargebee.js Payment Method Helper (chargebee.load("paypal"))
-   - Subscription: created server-side with the authorized payment intent id
+   PayPal-only checkout page (checkout-paypal.html)
+   - Chargebee.js Payment Method Helper: chargebee.load("paypal")
+   - Subscription created server-side with the authorized payment intent id
 --------------------------------------------------------------------------- */
 (function () {
   "use strict";
 
-  var CONFIG = null;
   var PRICE = null;
-  var cardComponent = null;
   var paypalHandler = null;
 
   function $(sel) {
@@ -41,7 +38,7 @@
         line1: $("#address_line1").value.trim(),
         line2: $("#address_line2").value.trim(),
         city: $("#city").value.trim(),
-        state: $("#state").value,
+        state: $("#state").value.trim(),
         zip: $("#zip").value.trim(),
         country: $("#country").value,
       },
@@ -99,65 +96,6 @@
     });
   }
 
-  /* ------------------------- Card payment flow ------------------------- */
-  function handleCardPayment() {
-    clearError();
-    var data = collectFormData();
-    if (!validateForm(data)) return;
-
-    var btn = $("#pay-button");
-    btn.disabled = true;
-    btn.textContent = "Wird verarbeitet…";
-
-    var additionalData = {
-      firstName: data.customer.first_name,
-      lastName: data.customer.last_name,
-      addressLine1: data.billing_address.line1,
-      addressLine2: data.billing_address.line2,
-      city: data.billing_address.city,
-      state: data.billing_address.state,
-      stateCode: data.billing_address.state,
-      zip: data.billing_address.zip,
-      countryCode: data.billing_address.country,
-    };
-
-    cardComponent
-      .tokenize(additionalData)
-      .then(function (tokenData) {
-        // Token created; now create the payment intent server-side.
-        return createPaymentIntent("card");
-      })
-      .then(function (paymentIntent) {
-        // Run 3DS (if the gateway requires it) and get an authorized intent.
-        return cardComponent.authorizeWith3ds(paymentIntent, {
-          billingAddress: {
-            firstName: data.customer.first_name,
-            lastName: data.customer.last_name,
-            phone: data.customer.phone,
-            addressLine1: data.billing_address.line1,
-            addressLine2: data.billing_address.line2,
-            city: data.billing_address.city,
-            state: data.billing_address.state,
-            stateCode: data.billing_address.state,
-            zip: data.billing_address.zip,
-            countryCode: data.billing_address.country,
-          },
-        });
-      })
-      .then(function (authorizedIntent) {
-        return createSubscription(authorizedIntent.id);
-      })
-      .then(function () {
-        window.location.href = "/success";
-      })
-      .catch(function (err) {
-        console.error("Card payment failed:", err);
-        showError(err.message || "Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.");
-        btn.disabled = false;
-        btn.textContent = "Jetzt für " + PRICE.formatted + " bezahlen";
-      });
-  }
-
   /* ------------------------- PayPal flow ------------------------- */
   function handlePayPal() {
     clearError();
@@ -209,15 +147,14 @@
       }),
     ])
       .then(function (results) {
-        CONFIG = results[0];
+        var config = results[0];
         PRICE = results[1];
 
         // Order overview card — server-driven price (auto-updates to € once EUR is enabled)
         $("#price-line").textContent = PRICE.formatted;
         $("#total-amount").textContent = PRICE.formatted;
-        $("#pay-button").textContent = "Jetzt für " + PRICE.formatted + " bezahlen";
 
-        if (!CONFIG.publishableKey) {
+        if (!config.publishableKey) {
           showError(
             "Fehlender Publishable Key. Fügen Sie CHARGEBEE_PUBLISHABLE_KEY zu Ihrer " +
               ".env-Datei hinzu (siehe README) und starten Sie den Server neu."
@@ -226,29 +163,10 @@
         }
 
         var chargebee = Chargebee.init({
-          site: CONFIG.site,
-          publishableKey: CONFIG.publishableKey,
+          site: config.site,
+          publishableKey: config.publishableKey,
           isItemsModel: true,
         });
-
-        // Card Components — fields mode (separate number / expiry / cvv inputs).
-        // The 'components' module loads async — card APIs only work after it resolves.
-        chargebee
-          .load("components")
-          .then(function () {
-            cardComponent = chargebee.createComponent("card");
-            cardComponent
-              .createField("number", { placeholder: "4111 1111 1111 1111" })
-              .mount("#card-number");
-            cardComponent
-              .createField("expiry", { placeholder: "MM / YY" })
-              .mount("#card-expiry");
-            cardComponent.createField("cvv", { placeholder: "CVV" }).mount("#card-cvv");
-          })
-          .catch(function (err) {
-            console.error("Card components failed to load:", err);
-            showError("Kartenfelder konnten nicht geladen werden.");
-          });
 
         // PayPal Payment Method Helper
         chargebee
@@ -261,7 +179,6 @@
           });
 
         $("#paypal-button").addEventListener("click", handlePayPal);
-        $("#pay-button").addEventListener("click", handleCardPayment);
       })
       .catch(function (err) {
         console.error("Init failed:", err);
