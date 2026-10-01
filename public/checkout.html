@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout</title>
+    <link rel="stylesheet" href="/checkout.css" />
+
+    <!-- Chargebee.js (required for Card Components + Payment Method Helpers) -->
+    <script src="https://js.chargebee.com/v2/chargebee.js"></script>
+  </head>
+  <body>
+    <div class="checkout-page">
+      <header class="checkout-header">
+        <span class="checkout-logo">Ninjja Koffe</span>
+      </header>
+
+      <div class="checkout-layout">
+        <!-- ===================== LEFT: FORM ===================== -->
+        <main class="checkout-form">
+          <!-- Account information -->
+          <section class="checkout-section">
+            <h2 class="section-title">Account information</h2>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="first_name">First name</label>
+                <input type="text" id="first_name" name="first_name" autocomplete="given-name" />
+              </div>
+              <div class="field">
+                <label for="last_name">Last name</label>
+                <input type="text" id="last_name" name="last_name" autocomplete="family-name" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="email">E-mail</label>
+              <input type="email" id="email" name="email" autocomplete="email" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="phone">Telephone number</label>
+                <input type="tel" id="phone" name="phone" autocomplete="tel" />
+              </div>
+              <div class="field">
+                <label for="company">Company name</label>
+                <input type="text" id="company" name="company" autocomplete="organization" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Billing address -->
+          <section class="checkout-section">
+            <h2 class="section-title">Billing address</h2>
+
+            <div class="field">
+              <label for="address_line1">Address Line 1</label>
+              <input type="text" id="address_line1" name="address_line1" autocomplete="address-line1" />
+            </div>
+
+            <div class="field">
+              <label for="address_line2">Address Line 2</label>
+              <input type="text" id="address_line2" name="address_line2" autocomplete="address-line2" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" autocomplete="address-level2" />
+              </div>
+              <div class="field">
+                <label for="zip">Postal code</label>
+                <input type="text" id="zip" name="zip" autocomplete="postal-code" />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="country">Country</label>
+                <select id="country" name="country">
+                  <option value="DE" selected>Germany</option>
+                  <option value="AT">Austria</option>
+                  <option value="CH">Switzerland</option>
+                  <option value="NL">Netherlands</option>
+                  <option value="BE">Belgium</option>
+                  <option value="FR">France</option>
+                  <option value="US">United States</option>
+                  <option value="GB">United Kingdom</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="state">Federal State</label>
+                <select id="state" name="state">
+                  <option value="">Select</option>
+                  <option value="BW">Baden-Württemberg</option>
+                  <option value="BY">Bavaria</option>
+                  <option value="BE">Berlin</option>
+                  <option value="BB">Brandenburg</option>
+                  <option value="HB">Bremen</option>
+                  <option value="HH">Hamburg</option>
+                  <option value="HE">Hesse</option>
+                  <option value="MV">Mecklenburg-Vorpommern</option>
+                  <option value="NI">Lower Saxony</option>
+                  <option value="NW">North Rhine-Westphalia</option>
+                  <option value="RP">Rhineland-Palatinate</option>
+                  <option value="SL">Saarland</option>
+                  <option value="SN">Saxony</option>
+                  <option value="ST">Saxony-Anhalt</option>
+                  <option value="SH">Schleswig-Holstein</option>
+                  <option value="TH">Thuringia</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- Payment method -->
+          <section class="checkout-section">
+            <h2 class="section-title">Payment method</h2>
+
+            <!-- Blue PayPal button (mockup hero element) -->
+            <button type="button" id="paypal-button" class="paypal-button">
+              <svg class="paypal-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M7.08 20.5c-.06.4-.3.5-.6.5h-2.2c-.4 0-.5-.2-.4-.6L6.6 5.2c.06-.4.3-.5.6-.5h4.4c2.5 0 4.2 1.2 4.2 3.4 0 2.6-2 4.2-4.6 4.2H8.6l-.7 4.4-.8 3.8zM12.4 3.7c.3-.2.6-.3 1-.3h3.6c2.6 0 4.4 1.1 4.4 3.5 0 2.9-2.3 4.7-5.3 4.7h-2.2l-.7 4.4-.8 3.8c-.06.4-.3.5-.6.5h-2.2c-.4 0-.5-.2-.4-.6l2.2-12.7c.06-.4.3-.5.6-.5h1.4l-1 2.6z"/>
+              </svg>
+              Pay with PayPal
+            </button>
+
+            <div class="or-divider"><span>or pay with card</span></div>
+
+            <div class="card-fields">
+              <div class="field">
+                <label>Card number</label>
+                <div id="card-number" class="card-input"></div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>Expiry</label>
+                  <div id="card-expiry" class="card-input"></div>
+                </div>
+                <div class="field">
+                  <label>CVV</label>
+                  <div id="card-cvv" class="card-input"></div>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" id="pay-button" class="pay-button">Pay</button>
+          </section>
+        </main>
+
+        <!-- ===================== RIGHT: ORDER OVERVIEW ===================== -->
+        <aside class="order-card">
+          <h2 class="order-title">Order overview</h2>
+
+          <div class="price-line">
+            <span id="price-name">Basic Monthly</span>
+            <span id="price-line" class="price-amount">€1.00</span>
+          </div>
+
+          <hr />
+
+          <div class="total-line">
+            <span>total</span>
+            <strong id="total-amount">€1.00</strong>
+          </div>
+
+          <div class="secure-text">🔒 Secure checkout powered by Chargebee</div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="error-banner" class="error-banner" hidden></div>
+
+    <script src="/checkout.js"></script>
+  </body>
+</html>

@@ -1,0 +1,281 @@
+/* ---------------------------------------------------------------------------
+   Custom checkout — styled to match the Chargebee hosted checkout mockup
+--------------------------------------------------------------------------- */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f7f8fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  color: #1f2933;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Header ---------- */
+.checkout-header {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 20px 8px;
+}
+
+.checkout-logo {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #1f2933;
+}
+
+/* ---------- Layout ---------- */
+.checkout-layout {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 20px 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Form sections ---------- */
+.checkout-section {
+  background: #ffffff;
+  border: 1px solid #e4e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin: 0 0 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2933;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1f2933;
+  background: #ffffff;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.field input::placeholder {
+  color: #9aa5b1;
+}
+
+/* Card component containers (Chargebee.js mounts its iframes here) */
+.card-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  min-height: 42px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-input:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ---------- Payment method ---------- */
+.paypal-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #0070ba; /* PayPal blue */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.paypal-button:hover {
+  background: #005ea6;
+}
+
+.paypal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.paypal-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #9aa5b1;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e4e7eb;
+}
+
+.or-divider span {
+  padding: 0 12px;
+}
+
+.card-fields {
+  margin-bottom: 20px;
+}
+
+.pay-button {
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #111827;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pay-button:hover {
+  background: #1f2937;
+}
+
+.pay-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- Order overview card ---------- */
+.order-card {
+  background: #ffffff;
+  border: 1px solid #e4e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  position: sticky;
+  top: 20px;
+}
+
+.order-title {
+  margin: 0 0 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2933;
+}
+
+.price-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.price-amount {
+  font-weight: 500;
+  color: #1f2933;
+}
+
+.order-card hr {
+  border: none;
+  border-top: 1px solid #e4e7eb;
+  margin: 0 0 20px;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #1f2933;
+  margin-bottom: 20px;
+}
+
+.total-line strong {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.secure-text {
+  color: #8b95a1;
+  font-size: 12px;
+}
+
+/* ---------- Error banner ---------- */
+.error-banner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 640px;
+  width: calc(100% - 40px);
+  padding: 12px 16px;
+  background: #fdecea;
+  color: #b91c1c;
+  border: 1px solid #f5c6c2;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+}

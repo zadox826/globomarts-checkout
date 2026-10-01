@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout</title>
+    <link rel="stylesheet" href="/styles.css" />
+
+    <!-- Chargebee.js -->
+    <script src="https://js.chargebee.com/v2/chargebee.js"></script>
+  </head>
+  <body>
+    <div class="order-card">
+      <h2>Order overview</h2>
+
+      <div class="price-line">€1.00</div>
+
+      <hr />
+
+      <div class="total-line">
+        <span>total</span>
+        <strong>€1.00</strong>
+      </div>
+
+      <div class="secure-text">🔒 Secure checkout powered by Chargebee</div>
+
+      <button id="checkout-button">Continue</button>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,64 @@
+body {
+  display: flex;
+  justify-content: center;
+  padding: 60px 16px;
+  background: #f7f8fa;
+}
+
+.order-card {
+  width: 300px;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 24px;
+  font-family: Arial, sans-serif;
+}
+
+.order-card h2 {
+  font-size: 16px;
+  margin-bottom: 28px;
+}
+
+.price-line {
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.order-card hr {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 0 0 20px;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.total-line strong {
+  font-size: 18px;
+}
+
+.secure-text {
+  color: #8b95a1;
+  font-size: 12px;
+}
+
+#checkout-button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  cursor: pointer;
+}
+
+#checkout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

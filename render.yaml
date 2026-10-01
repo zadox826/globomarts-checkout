@@ -1,0 +1,32 @@
+# Render Blueprint — free tier, custom domain + auto HTTPS.
+# 1. Push this project to a GitHub repo (do NOT commit .env).
+# 2. Render Dashboard > New > Blueprint > pick the repo.
+# 3. Render asks for the two "sync: false" secrets — paste them there.
+# 4. Settings > Custom Domains > add checkout.ninjjakoffe.site, then add the
+#    CNAME record it shows you at Namecheap.
+services:
+  - type: web
+    name: ninjjakoffe-checkout
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CHARGEBEE_SITE
+        value: ninjjakoffe-test
+      - key: CHARGEBEE_API_KEY
+        sync: false
+      - key: CHARGEBEE_PUBLISHABLE_KEY
+        sync: false
+      - key: ITEM_PRICE_ID
+        value: basic-eur-monthly
+      - key: REDIRECT_URL
+        value: https://checkout.ninjjakoffe.site/success
+      - key: CANCEL_URL
+        value: https://checkout.ninjjakoffe.site/cancel

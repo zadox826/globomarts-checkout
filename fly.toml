@@ -1,0 +1,37 @@
+# Fly.io config. NOTE: Fly requires a credit card on file and is no longer
+# fully free — use render.yaml if you want a genuinely $0 host.
+#   fly launch --no-deploy --copy-config
+#   fly secrets set CHARGEBEE_API_KEY=... CHARGEBEE_PUBLISHABLE_KEY=...
+#   fly deploy
+#   fly certs add checkout.ninjjakoffe.site
+app = "ninjjakoffe-checkout"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  CHARGEBEE_SITE = "ninjjakoffe-test"
+  ITEM_PRICE_ID = "basic-eur-monthly"
+  REDIRECT_URL = "https://checkout.ninjjakoffe.site/success"
+  CANCEL_URL = "https://checkout.ninjjakoffe.site/cancel"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
