@@ -4,8 +4,12 @@
        chargebee.load("paypal")
          -> createPaymentIntent("paypal_express_checkout")
          -> paypalHandler.setPaymentIntent(intent)
-         -> paypalHandler.mountPaymentButton(selector, { style })
+         -> paypalHandler.mountPaymentButton(selector, { style })  [awaited]
          -> paypalHandler.handlePayment({ click, cancel, success, error })
+   - IMPORTANT: handlePayment() may only be armed AFTER mountPaymentButton()
+     resolves. The SDK assigns its internal gatewayHandler during mount;
+     arming earlier throws "Cannot read properties of undefined (reading
+     'handlePayment')" and leaves the PayPal button without callbacks.
    - The click callback validates the form BEFORE PayPal opens:
      invalid  -> German error banner, PayPal does NOT open
      valid    -> PayPal popup opens
@@ -144,52 +148,58 @@
       return;
     }
     armCount += 1;
-    paypalHandler
-      .handlePayment({
-        click: function () {
-          // Runs when the user clicks the PayPal button, BEFORE the popup opens.
-          if (processing) {
-            throw new Error("PAYMENT_IN_PROGRESS");
-          }
-          clearError();
-          var data = collectFormData();
-          if (!validateForm(data)) {
-            showError(VALIDATION_ERROR);
-            throw new Error("VALIDATION_FAILED");
-          }
-        },
-        cancel: function () {
-          // User closed the PayPal popup without paying.
-          armPayPal();
-        },
-        success: function (authorizedIntent) {
-          // PayPal authorized the payment -> create the subscription.
-          processing = true;
-          createSubscription(authorizedIntent.id)
-            .then(function () {
-              window.location.href = "/success";
-            })
-            .catch(function (err) {
-              console.error("Subscription creation failed:", err);
-              processing = false;
-              showError(err.message || SUBSCRIPTION_ERROR);
-              armPayPal();
-            });
-        },
-        error: function (intent, err) {
-          if (processing) return; // error already handled by the success path
-          // If the banner is already visible, this is the validation-rejection
-          // echo (click callback threw) -> keep the validation message and the
-          // persistent callbacks; do NOT re-arm.
-          if (!$("#error-banner").hidden) return;
-          console.error("PayPal payment error:", err);
-          showError((err && err.message) || GENERIC_PAYMENT_ERROR);
-          armPayPal();
-        },
-      })
-      .catch(function (err) {
-        console.warn("handlePayment rejected:", err);
-      });
+    try {
+      paypalHandler
+        .handlePayment({
+          click: function () {
+            // Runs when the user clicks the PayPal button, BEFORE the popup opens.
+            clearError();
+            if (processing) {
+              throw new Error("PAYMENT_IN_PROGRESS");
+            }
+            var data = collectFormData();
+            if (!validateForm(data)) {
+              showError(VALIDATION_ERROR);
+              throw new Error("VALIDATION_FAILED");
+            }
+          },
+          cancel: function () {
+            // User closed the PayPal popup without paying.
+            armPayPal();
+          },
+          success: function (authorizedIntent) {
+            // PayPal authorized the payment -> create the subscription.
+            processing = true;
+            createSubscription(authorizedIntent.id)
+              .then(function () {
+                window.location.href = "/success";
+              })
+              .catch(function (err) {
+                console.error("Subscription creation failed:", err);
+                processing = false;
+                showError(err.message || SUBSCRIPTION_ERROR);
+                armPayPal();
+              });
+          },
+          error: function (intent, err) {
+            if (processing) return; // error already handled by the success path
+            // If the banner is already visible, this is the validation-rejection
+            // echo (click callback threw) -> keep the validation message and the
+            // persistent callbacks; do NOT re-arm.
+            if (!$("#error-banner").hidden) return;
+            console.error("PayPal payment error:", err);
+            showError((err && err.message) || GENERIC_PAYMENT_ERROR);
+            armPayPal();
+          },
+        })
+        .catch(function (err) {
+          console.warn("handlePayment rejected:", err);
+        });
+    } catch (e) {
+      // The SDK wrapper can throw synchronously if its internal gateway
+      // handler is not ready yet — never let that break the page.
+      console.warn("handlePayment threw synchronously:", e);
+    }
   }
 
   // Mounts the real PayPal smart button into a holder next to the custom
@@ -201,10 +211,21 @@
     holder.className = "paypal-button-holder";
     customBtn.parentNode.insertBefore(holder, customBtn.nextSibling);
     customBtn.hidden = true;
-    paypalHandler.mountPaymentButton("#paypal-button-holder", {
-      style: { size: "responsive" },
-    });
-    armPayPal();
+    // The SDK assigns its internal gatewayHandler DURING mount (async).
+    // handlePayment() must only run AFTER mount resolves — otherwise the
+    // wrapper throws "Cannot read properties of undefined (reading
+    // 'handlePayment')" and the real button ends up without callbacks.
+    return paypalHandler
+      .mountPaymentButton("#paypal-button-holder", {
+        style: { size: "responsive" },
+      })
+      .then(function () {
+        armPayPal();
+      })
+      .catch(function (err) {
+        console.error("PayPal button mount failed:", err);
+        failSetup(GATEWAY_ERROR);
+      });
   }
 
   function failSetup(msg) {
@@ -261,8 +282,8 @@
             paymentIntent = intent;
             // 3) Attach the intent to the helper
             paypalHandler.setPaymentIntent(intent);
-            // 4) Mount the real PayPal button and arm the callbacks
-            mountPayPalButton();
+            // 4) Mount the real PayPal button, THEN arm the callbacks
+            return mountPayPalButton();
           })
           .catch(function (err) {
             console.error("PayPal setup failed:", err);
