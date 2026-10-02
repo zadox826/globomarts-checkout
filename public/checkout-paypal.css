@@ -19,3 +19,14 @@
 .paypal-button--navy:hover {
   background: #0e2c63;
 }
+/* Real PayPal smart button holder — replaces the custom navy button.
+   The PayPal iframe fills the holder; keep the same visual footprint as the
+   old full-width button. */
+.paypal-button-holder {
+  min-height: 48px;
+  margin-top: 8px;
+}
+
+.paypal-button-holder iframe {
+  width: 100% !important;
+}
