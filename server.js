@@ -50,6 +50,7 @@ const ALLOWED_ITEM_PRICES = new Set([
   "nc502eu-eur",
   "hp072euwh-eur",
   "af500eu-eur",
+  "sodastream-duo-family-pack-schwarz-titan-eur",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -78,6 +79,7 @@ const PRODUCT_LINKS = {
   nc502eu: { item_price_id: "nc502eu-eur", name: "Ninja CREAMi Deluxe 10-in-1 Eismaschine" },
   hp072euwh: { item_price_id: "hp072euwh-eur", name: "Shark NeverChange Luftreiniger Compact Pro" },
   af500eu: { item_price_id: "af500eu-eur", name: "Ninja Foodi FlexDrawer 10,4 L Heißluftfritteuse" },
+  "sodastream-duo-family-pack-schwarz-titan": { item_price_id: "sodastream-duo-family-pack-schwarz-titan-eur", name: "SodaStream DUO Family Pack – Schwarz/Titan" },
 };
 
 // The item price sold by the custom checkout page (fallback when no ?p= given).
