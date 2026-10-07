@@ -20,6 +20,8 @@
   "use strict";
 
   var PRICE = null;
+  // Product handle from the storefront link: /pay/<handle> -> /checkout-paypal?p=<handle>
+  var PARAM_PRICE = new URLSearchParams(window.location.search).get("p") || null;
   var paypalHandler = null;
   var paymentIntent = null;
   var processing = false;
@@ -35,7 +37,7 @@
   var GENERIC_PAYMENT_ERROR =
     "PayPal-Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.";
   var SUBSCRIPTION_ERROR =
-    "Abo konnte nicht erstellt werden. Bitte versuchen Sie es erneut.";
+    "Zahlung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.";
   var ARM_CAP_ERROR =
     "PayPal-Zahlung fehlgeschlagen. Bitte laden Sie die Seite neu.";
 
@@ -95,7 +97,10 @@
     return fetch("/api/payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ payment_method_type: paymentMethodType }),
+      body: JSON.stringify({
+        payment_method_type: paymentMethodType,
+        item_price_id: PARAM_PRICE ? PARAM_PRICE + "-eur" : undefined,
+      }),
     }).then(function (res) {
       return res.json().then(function (data) {
         if (!res.ok) {
@@ -117,6 +122,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         payment_intent_id: paymentIntentId,
+        item_price_id: PARAM_PRICE ? PARAM_PRICE + "-eur" : undefined,
         customer: data.customer,
         billing_address: data.billing_address,
       }),
@@ -244,7 +250,7 @@
       fetch("/api/config").then(function (r) {
         return r.json();
       }),
-      fetch("/api/price").then(function (r) {
+      fetch("/api/price" + (PARAM_PRICE ? "?id=" + encodeURIComponent(PARAM_PRICE) : "")).then(function (r) {
         return r.json();
       }),
     ])
@@ -255,6 +261,18 @@
         // Order overview card — server-driven price
         $("#price-line").textContent = PRICE.formatted;
         $("#total-amount").textContent = PRICE.formatted;
+
+        // Product name above the order card (one-time product checkout)
+        if (PRICE.name) {
+          var nameEl = document.createElement("div");
+          nameEl.className = "product-name";
+          nameEl.textContent = PRICE.name;
+          var priceLine = $(".price-line");
+          if (priceLine) {
+            priceLine.parentNode.insertBefore(nameEl, priceLine);
+          }
+        }
+        document.title = "GLOBOMARTS – Kasse";
 
         if (!config.publishableKey) {
           failSetup(
