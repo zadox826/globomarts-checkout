@@ -22,6 +22,14 @@
   var PRICE = null;
   // Product handle from the storefront link: /pay/<handle> -> /checkout-paypal?p=<handle>
   var PARAM_PRICE = new URLSearchParams(window.location.search).get("p") || null;
+  // Host-scoped branding: holzundherd.shop is a separate storefront on the same service.
+  var BRAND = /(^|\.)holzundherd\.shop$/i.test(window.location.hostname)
+    ? "holzundherd"
+    : "GLOBOMARTS";
+  // Apply logo + title immediately (script runs at end of body; independent of API availability)
+  document.title = BRAND + " – Kasse";
+  var __logoEl = document.querySelector(".checkout-logo");
+  if (__logoEl) __logoEl.textContent = BRAND;
   var paypalHandler = null;
   var paymentIntent = null;
   var processing = false;
@@ -272,7 +280,6 @@
             priceLine.parentNode.insertBefore(nameEl, priceLine);
           }
         }
-        document.title = "GLOBOMARTS – Kasse";
 
         if (!config.publishableKey) {
           failSetup(

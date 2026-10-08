@@ -166,14 +166,21 @@ app.get("/api/price", async (req, res) => {
       productName = product.name;
     }
     const ip = await fetchItemPrice(itemPriceId);
+    // Host-scoped branding: holzundherd.shop is a separate storefront on this service.
+    const isHolzundherd = /(^|\.)holzundherd\.shop$/i.test(
+      String(req.headers.host || "").split(":")[0]
+    );
+    // holzundherd storefront: price only — no plan label (e.g. "Monthly EUR").
+    // Product checkouts (via /pay/<handle>) keep their product name everywhere.
+    const displayName = isHolzundherd && !productName ? "" : productName || ip.name;
     return res.json({
       id: ip.id,
-      name: productName || ip.name,
+      name: displayName,
       amount: ip.price,
       currency_code: ip.currency_code,
       formatted: formatPrice(ip.price, ip.currency_code),
       type: ip.item_type || "charge",
-      brand: "GLOBOMARTS",
+      brand: isHolzundherd ? "holzundherd" : "GLOBOMARTS",
     });
   } catch (err) {
     console.error("Price fetch error:", err.status, JSON.stringify(err.details || err.message));
