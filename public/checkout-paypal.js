@@ -22,14 +22,23 @@
   var PRICE = null;
   // Product handle from the storefront link: /pay/<handle> -> /checkout-paypal?p=<handle>
   var PARAM_PRICE = new URLSearchParams(window.location.search).get("p") || null;
-  // Host-scoped branding: holzundherd.shop is a separate storefront on the same service.
+  // Host-scoped branding: several storefronts share this service.
+  // The server is the source of truth (/api/price returns `brand`), but the
+  // hostname regex gives the first paint the right name before the fetch lands.
   var BRAND = /(^|\.)holzundherd\.shop$/i.test(window.location.hostname)
     ? "holzundherd"
     : "GLOBOMARTS";
+
+  function applyBrand(name) {
+    if (!name) return;
+    BRAND = name;
+    document.title = name + " – Kasse";
+    var logoEl = document.querySelector(".checkout-logo");
+    if (logoEl) logoEl.textContent = name;
+  }
+
   // Apply logo + title immediately (script runs at end of body; independent of API availability)
-  document.title = BRAND + " – Kasse";
-  var __logoEl = document.querySelector(".checkout-logo");
-  if (__logoEl) __logoEl.textContent = BRAND;
+  applyBrand(BRAND);
   var paypalHandler = null;
   var paymentIntent = null;
   var processing = false;
@@ -107,7 +116,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         payment_method_type: paymentMethodType,
-        item_price_id: PARAM_PRICE ? PARAM_PRICE + "-eur" : undefined,
+        item_price_id: PRICE ? PRICE.id : undefined,
       }),
     }).then(function (res) {
       return res.json().then(function (data) {
@@ -130,7 +139,7 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         payment_intent_id: paymentIntentId,
-        item_price_id: PARAM_PRICE ? PARAM_PRICE + "-eur" : undefined,
+        item_price_id: PRICE ? PRICE.id : undefined,
         customer: data.customer,
         billing_address: data.billing_address,
       }),
@@ -265,6 +274,9 @@
       .then(function (results) {
         var config = results[0];
         PRICE = results[1];
+
+        // Server-side brand for this host wins over the first-paint guess.
+        if (PRICE.brand) applyBrand(PRICE.brand);
 
         // Order overview card — server-driven price
         $("#price-line").textContent = PRICE.formatted;

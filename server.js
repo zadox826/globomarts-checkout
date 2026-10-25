@@ -30,6 +30,7 @@ const CANCEL_URL = process.env.CANCEL_URL || "https://example.com/cancel";
 // ---------------------------------------------------------------------------
 const ALLOWED_ITEM_PRICES = new Set([
   "basic-eur-monthly",
+  "basic-3999-eur-monthly",
   "es352eu-eur",
   "mo201eu-eur",
   "ci100eu-eur",
@@ -84,6 +85,48 @@ const PRODUCT_LINKS = {
 
 // The item price sold by the custom checkout page (fallback when no ?p= given).
 const ITEM_PRICE_ID = process.env.ITEM_PRICE_ID || "basic-eur-monthly";
+
+// ---------------------------------------------------------------------------
+// BRAND MAP — host -> storefront branding (and optional price override).
+// Matching is exact host or dot-suffix, so "holzundherd.shop" covers
+// checkout.holzundherd.shop. Extend at runtime without a code change via the
+// BRAND_MAP environment variable (JSON), e.g.
+//   BRAND_MAP={"checkout.example.de":{"brand":"EXAMPLE","itemPriceId":"basic-3999-eur-monthly"}}
+// Keys here win over entries of the same domain from the environment.
+// ---------------------------------------------------------------------------
+const DEFAULT_BRAND_MAP = {
+  "holzundherd.shop": { brand: "holzundherd", hidePlanName: true },
+  "globomarts.online": { brand: "GLOBOMARTS" },
+  "globomarts.shop": { brand: "GLOBOMARTS" },
+};
+
+function readEnvBrandMap() {
+  const raw = process.env.BRAND_MAP;
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    console.warn("BRAND_MAP is not valid JSON — ignoring it");
+    return {};
+  }
+}
+
+const BRAND_MAP = Object.assign({}, readEnvBrandMap(), DEFAULT_BRAND_MAP);
+
+// Returns {} when the host has no entry (caller falls back to GLOBOMARTS defaults).
+function resolveBrand(hostHeader) {
+  const host = String(hostHeader || "").split(":")[0].trim().toLowerCase();
+  if (!host) return {};
+  for (const key of Object.keys(BRAND_MAP)) {
+    const domain = String(key).trim().toLowerCase().replace(/^\./, "");
+    if (!domain) continue;
+    if (host === domain || host.endsWith("." + domain)) {
+      return BRAND_MAP[key] || {};
+    }
+  }
+  return {};
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -154,8 +197,11 @@ app.get("/api/price", async (req, res) => {
         .status(500)
         .json({ error: "Server misconfigured: CHARGEBEE_SITE / CHARGEBEE_API_KEY missing" });
     }
+    // Host-scoped branding: each storefront host may have its own brand,
+    // its own plan label behaviour and its own default item price.
+    const hostBrand = resolveBrand(req.headers.host);
     const handle = req.query.id;
-    let itemPriceId = ITEM_PRICE_ID;
+    let itemPriceId = hostBrand.itemPriceId || ITEM_PRICE_ID;
     let productName = null;
     if (handle) {
       const product = PRODUCT_LINKS[handle];
@@ -166,13 +212,9 @@ app.get("/api/price", async (req, res) => {
       productName = product.name;
     }
     const ip = await fetchItemPrice(itemPriceId);
-    // Host-scoped branding: holzundherd.shop is a separate storefront on this service.
-    const isHolzundherd = /(^|\.)holzundherd\.shop$/i.test(
-      String(req.headers.host || "").split(":")[0]
-    );
-    // holzundherd storefront: price only — no plan label (e.g. "Monthly EUR").
+    // hidePlanName stores show the price only — no plan label (e.g. "Monthly EUR").
     // Product checkouts (via /pay/<handle>) keep their product name everywhere.
-    const displayName = isHolzundherd && !productName ? "" : productName || ip.name;
+    const displayName = hostBrand.hidePlanName && !productName ? "" : productName || ip.name;
     return res.json({
       id: ip.id,
       name: displayName,
@@ -180,7 +222,8 @@ app.get("/api/price", async (req, res) => {
       currency_code: ip.currency_code,
       formatted: formatPrice(ip.price, ip.currency_code),
       type: ip.item_type || "charge",
-      brand: isHolzundherd ? "holzundherd" : "GLOBOMARTS",
+      brand: hostBrand.brand || "GLOBOMARTS",
+      hidePlanName: !!hostBrand.hidePlanName,
     });
   } catch (err) {
     console.error("Price fetch error:", err.status, JSON.stringify(err.details || err.message));
@@ -202,7 +245,10 @@ app.post("/api/payment-intent", async (req, res) => {
     }
 
     const { payment_method_type = "card", item_price_id } = req.body || {};
-    const itemPriceId = item_price_id || ITEM_PRICE_ID;
+    // Host-scoped default: a storefront host may sell its own plan when the
+    // client does not pin an item price id explicitly.
+    const itemPriceId =
+      item_price_id || resolveBrand(req.headers.host).itemPriceId || ITEM_PRICE_ID;
     if (!ALLOWED_ITEM_PRICES.has(itemPriceId)) {
       return res.status(400).json({ error: "Invalid item_price_id" });
     }
@@ -247,7 +293,10 @@ app.post("/api/subscribe", async (req, res) => {
     }
 
     const { payment_intent_id, item_price_id, customer = {}, billing_address = {} } = req.body || {};
-    const itemPriceId = item_price_id || ITEM_PRICE_ID;
+    // Host-scoped default: a storefront host may sell its own plan when the
+    // client does not pin an item price id explicitly.
+    const itemPriceId =
+      item_price_id || resolveBrand(req.headers.host).itemPriceId || ITEM_PRICE_ID;
 
     if (!payment_intent_id) {
       return res.status(400).json({ error: "payment_intent_id is required" });
