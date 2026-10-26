@@ -31,6 +31,7 @@ const CANCEL_URL = process.env.CANCEL_URL || "https://example.com/cancel";
 const ALLOWED_ITEM_PRICES = new Set([
   "basic-eur-monthly",
   "basic-3999-eur-monthly",
+  "basic-7900-eur-monthly",
   "es352eu-eur",
   "mo201eu-eur",
   "ci100eu-eur",
@@ -201,6 +202,11 @@ app.get("/api/price", async (req, res) => {
     // its own plan label behaviour and its own default item price.
     const hostBrand = resolveBrand(req.headers.host);
     const handle = req.query.id;
+    // ?price=<item_price_id> lets one host advertise several plans through
+    // separate links (e.g. /checkout-paypal?price=basic-7900-eur-monthly).
+    // Only allowlisted item prices may be requested.
+    const requestedPrice =
+      typeof req.query.price === "string" ? req.query.price.trim() : "";
     let itemPriceId = hostBrand.itemPriceId || ITEM_PRICE_ID;
     let productName = null;
     if (handle) {
@@ -210,6 +216,11 @@ app.get("/api/price", async (req, res) => {
       }
       itemPriceId = product.item_price_id;
       productName = product.name;
+    } else if (requestedPrice) {
+      if (!ALLOWED_ITEM_PRICES.has(requestedPrice)) {
+        return res.status(400).json({ error: "Invalid item_price_id" });
+      }
+      itemPriceId = requestedPrice;
     }
     const ip = await fetchItemPrice(itemPriceId);
     // hidePlanName stores show the price only — no plan label (e.g. "Monthly EUR").

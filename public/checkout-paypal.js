@@ -20,8 +20,12 @@
   "use strict";
 
   var PRICE = null;
+  var QUERY = new URLSearchParams(window.location.search);
   // Product handle from the storefront link: /pay/<handle> -> /checkout-paypal?p=<handle>
-  var PARAM_PRICE = new URLSearchParams(window.location.search).get("p") || null;
+  var PARAM_PRICE = QUERY.get("p") || null;
+  // Plan link: /checkout-paypal?plan=basic-7900-eur-monthly selects the exact
+  // item price to sell on this link (server validates it against its allowlist).
+  var PARAM_PLAN = QUERY.get("plan") || null;
   // Host-scoped branding: several storefronts share this service.
   // The server is the source of truth (/api/price returns `brand`), but the
   // hostname regex gives the first paint the right name before the fetch lands.
@@ -60,6 +64,13 @@
 
   function $(sel) {
     return document.querySelector(sel);
+  }
+
+  // Builds the /api/price query string from the link parameters.
+  function priceQuery() {
+    if (PARAM_PRICE) return "?id=" + encodeURIComponent(PARAM_PRICE);
+    if (PARAM_PLAN) return "?price=" + encodeURIComponent(PARAM_PLAN);
+    return "";
   }
 
   function showError(msg) {
@@ -267,7 +278,7 @@
       fetch("/api/config").then(function (r) {
         return r.json();
       }),
-      fetch("/api/price" + (PARAM_PRICE ? "?id=" + encodeURIComponent(PARAM_PRICE) : "")).then(function (r) {
+      fetch("/api/price" + priceQuery()).then(function (r) {
         return r.json();
       }),
     ])

@@ -4,14 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weiterleitung…</title>
-    <meta http-equiv="refresh" content="0; url=/checkout-paypal" />
-    <script>location.replace("/checkout-paypal");</script>
+    <!-- Forward to the real checkout page and keep the query string
+         (?p=<handle>, ?plan=<item_price_id>) so link-selected prices survive. -->
+    <script>
+      location.replace("/checkout-paypal" + location.search);
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=/checkout-paypal" /></noscript>
     <style>
       body { font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; color: #4a5568; margin: 0; }
       a { color: #14387f; }
     </style>
   </head>
   <body>
-    <p>Einen Moment bitte… <a href="/checkout-paypal">Weiter zur Kasse</a></p>
+    <p>Einen Moment bitte… <a href="/checkout-paypal" id="fallback-link">Weiter zur Kasse</a></p>
+    <script>
+      document.getElementById("fallback-link").href =
+        "/checkout-paypal" + location.search;
+    </script>
   </body>
 </html>
