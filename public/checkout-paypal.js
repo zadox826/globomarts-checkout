@@ -26,6 +26,11 @@
   // Plan link: /checkout-paypal?plan=basic-7900-eur-monthly selects the exact
   // item price to sell on this link (server validates it against its allowlist).
   var PARAM_PLAN = QUERY.get("plan") || null;
+  // Short link: /checkout-paypal?79 — a bare number is a price shorthand the
+  // server resolves (79 -> the 79 EUR plan, 49 -> the 49,99 EUR plan).
+  var BARE_PRICE = /^\?\d{1,6}$/.test(window.location.search)
+    ? window.location.search.slice(1)
+    : null;
   // Host-scoped branding: several storefronts share this service.
   // The server is the source of truth (/api/price returns `brand`), but the
   // hostname regex gives the first paint the right name before the fetch lands.
@@ -70,6 +75,7 @@
   function priceQuery() {
     if (PARAM_PRICE) return "?id=" + encodeURIComponent(PARAM_PRICE);
     if (PARAM_PLAN) return "?price=" + encodeURIComponent(PARAM_PLAN);
+    if (BARE_PRICE) return "?price=" + encodeURIComponent(BARE_PRICE);
     return "";
   }
 

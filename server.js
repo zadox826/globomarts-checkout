@@ -56,6 +56,32 @@ const ALLOWED_ITEM_PRICES = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// SHORT PRICE LINKS
+// /checkout-paypal?79 is a shorthand for the 79 EUR/month plan. A bare number
+// is resolved to an item price id here and still checked against the allowlist
+// above, so a visitor cannot point the link at an arbitrary catalog price.
+// ---------------------------------------------------------------------------
+const PRICE_SHORTHANDS = {
+  "39": "basic-3999-eur-monthly",
+  "49": "basic-eur-monthly",
+  "4999": "basic-eur-monthly",
+  "79": "basic-7900-eur-monthly",
+};
+
+function resolvePriceParam(raw) {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  if (PRICE_SHORTHANDS[value]) return PRICE_SHORTHANDS[value];
+  // Accept minor units as well (7900 -> 79 EUR) so both conventions work.
+  if (/^\d+$/.test(value)) {
+    const amount = Number(value);
+    const euros = amount >= 1000 ? amount / 100 : amount;
+    if (PRICE_SHORTHANDS[String(euros)]) return PRICE_SHORTHANDS[String(euros)];
+  }
+  return value; // treated as an item price id (allowlist decides)
+}
+
+// ---------------------------------------------------------------------------
 // PRODUCT LINKS — Shopify handle -> Chargebee item price + display name.
 // The storefront buy buttons point to /pay/<handle>; the server resolves the
 // handle to the exact one-time item price and redirects to the PayPal checkout.
@@ -217,10 +243,12 @@ app.get("/api/price", async (req, res) => {
       itemPriceId = product.item_price_id;
       productName = product.name;
     } else if (requestedPrice) {
-      if (!ALLOWED_ITEM_PRICES.has(requestedPrice)) {
+      // ?price=79 (short link) is resolved to its item price id first.
+      const resolved = resolvePriceParam(requestedPrice);
+      if (!ALLOWED_ITEM_PRICES.has(resolved)) {
         return res.status(400).json({ error: "Invalid item_price_id" });
       }
-      itemPriceId = requestedPrice;
+      itemPriceId = resolved;
     }
     const ip = await fetchItemPrice(itemPriceId);
     // hidePlanName stores show the price only — no plan label (e.g. "Monthly EUR").
